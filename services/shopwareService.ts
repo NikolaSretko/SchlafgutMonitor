@@ -65,15 +65,28 @@ export class ShopwareService {
       endDate: Date,
       onlyPaid: boolean
   ): Promise<DashboardData> {
-    
-    const isoStartString = startDate.toISOString();
-    const isoEndString = endDate.toISOString();
 
-    // Build Filter
+    // Convert local dates to UTC strings preserving the intended local date
+    // Instead of toISOString() which shifts timezone, we format as UTC directly
+    const formatToUTC = (date: Date): string => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const seconds = String(date.getSeconds()).padStart(2, '0');
+
+      return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}+00:00`;
+    };
+
+    const isoStartString = formatToUTC(startDate);
+    const isoEndString = formatToUTC(endDate);
+
+    // Build Filter - using 'orderDate' as per Shopware 6 API standard
     const filters: any[] = [
         {
             type: 'range',
-            field: 'orderDateTime',
+            field: 'orderDate',
             parameters: {
                 gte: isoStartString,
                 lte: isoEndString
