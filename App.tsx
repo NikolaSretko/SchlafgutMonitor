@@ -38,6 +38,15 @@ const App: React.FC = () => {
   const [customEndDate, setCustomEndDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [onlyPaid, setOnlyPaid] = useState<boolean>(false);
 
+  // Applied filters (only these trigger re-fetch)
+  const [appliedFilters, setAppliedFilters] = useState({
+    channel: 'schlafgut.com',
+    dateMode: 'today' as 'today' | 'custom',
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: new Date().toISOString().split('T')[0],
+    onlyPaid: false
+  });
+
   // Auto-Login check on Mount
   useEffect(() => {
     const savedCreds = localStorage.getItem('shopware-creds-v2');
@@ -58,7 +67,7 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // Effect to Fetch Data
+  // Effect to Fetch Data - only when appliedFilters change
   useEffect(() => {
     const fetchData = async () => {
         if (!currentConfig) return;
@@ -68,30 +77,30 @@ const App: React.FC = () => {
 
         try {
             const service = new ShopwareService(currentConfig);
-            const channelFilter = selectedChannel === 'ALL' ? null : selectedChannel;
-            
+            const channelFilter = appliedFilters.channel === 'ALL' ? null : appliedFilters.channel;
+
             // Date Logic
             let start: Date;
             let end: Date;
 
-            if (dateMode === 'today') {
+            if (appliedFilters.dateMode === 'today') {
                 const now = new Date();
                 start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
                 end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
             } else {
-                start = new Date(customStartDate);
+                start = new Date(appliedFilters.startDate);
                 start.setHours(0, 0, 0, 0);
-                end = new Date(customEndDate);
+                end = new Date(appliedFilters.endDate);
                 end.setHours(23, 59, 59, 999);
             }
 
             const dashboardData = await service.getDashboardData(
-                channelFilter, 
-                start, 
-                end, 
-                onlyPaid
+                channelFilter,
+                start,
+                end,
+                appliedFilters.onlyPaid
             );
-            
+
             setData(dashboardData);
             setStatus(AppStatus.DASHBOARD);
         } catch (err) {
@@ -100,7 +109,7 @@ const App: React.FC = () => {
                 setStatus(AppStatus.LOGIN);
             } else {
                 console.error(err);
-                setStatus(AppStatus.DASHBOARD); 
+                setStatus(AppStatus.DASHBOARD);
             }
         }
     };
@@ -108,7 +117,7 @@ const App: React.FC = () => {
     if (currentConfig) {
         fetchData();
     }
-  }, [currentConfig, selectedChannel, dateMode, customStartDate, customEndDate, onlyPaid]);
+  }, [currentConfig, appliedFilters]);
 
   const handleLoginSubmit = (config: ShopConfig) => {
       setCurrentConfig(config);
@@ -122,36 +131,19 @@ const App: React.FC = () => {
       setSelectedChannel('schlafgut.com');
   };
 
-  const handleRefresh = () => {
-      if (currentConfig) {
-         const fetchNow = async () => {
-             setStatus(AppStatus.LOADING);
-             try {
-                 const service = new ShopwareService(currentConfig);
-                 const channelFilter = selectedChannel === 'ALL' ? null : selectedChannel;
-                 
-                 let start: Date;
-                 let end: Date;
-                 if (dateMode === 'today') {
-                     const now = new Date();
-                     start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-                     end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
-                 } else {
-                     start = new Date(customStartDate);
-                     start.setHours(0,0,0,0);
-                     end = new Date(customEndDate);
-                     end.setHours(23,59,59,999);
-                 }
+  const handleApplyFilters = () => {
+      setAppliedFilters({
+          channel: selectedChannel,
+          dateMode: dateMode,
+          startDate: customStartDate,
+          endDate: customEndDate,
+          onlyPaid: onlyPaid
+      });
+  };
 
-                 const res = await service.getDashboardData(channelFilter, start, end, onlyPaid);
-                 setData(res);
-                 setStatus(AppStatus.DASHBOARD);
-             } catch(e) {
-                 setStatus(AppStatus.DASHBOARD);
-             }
-         };
-         fetchNow();
-      }
+  const handleRefresh = () => {
+      // Re-apply current filters to trigger refresh
+      setAppliedFilters({...appliedFilters});
   };
 
   const getSelectedLabel = () => {
@@ -206,9 +198,16 @@ const App: React.FC = () => {
                     <ChevronDown size={14} className="text-gray-400" />
                </div>
                
-               <select 
+               <select
                   value={selectedChannel}
-                  onChange={(e) => setSelectedChannel(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedChannel(e.target.value);
+                    // Apply channel change immediately
+                    setAppliedFilters({
+                      ...appliedFilters,
+                      channel: e.target.value
+                    });
+                  }}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                >
                    {CHANNELS.map(c => (
@@ -290,7 +289,7 @@ const App: React.FC = () => {
                   )}
 
                   {/* Paid Filter */}
-                  <div 
+                  <div
                     onClick={() => setOnlyPaid(!onlyPaid)}
                     className={`flex items-center justify-between px-4 py-3 rounded-xl border cursor-pointer transition-all active:scale-[0.98] ${onlyPaid ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200 hover:border-gray-300'}`}
                   >
@@ -301,6 +300,14 @@ const App: React.FC = () => {
                           <span className={`text-sm font-bold ${onlyPaid ? 'text-green-800' : 'text-gray-600'}`}>Nur bezahlte Bestellungen</span>
                       </div>
                   </div>
+
+                  {/* Apply Button */}
+                  <button
+                    onClick={handleApplyFilters}
+                    className="w-full py-3 px-4 bg-black text-white rounded-xl font-bold text-sm uppercase tracking-wide hover:bg-gray-800 transition-all active:scale-[0.98] shadow-lg"
+                  >
+                    Filter anwenden
+                  </button>
 
               </div>
           </div>
