@@ -59,12 +59,15 @@ export class ShopwareService {
     return response;
   }
 
-  async getDashboardData(channelFilter: string | null): Promise<DashboardData> {
-    // Get Start of Day in Local Time, convert to UTC for API
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
+  async getDashboardData(
+      channelFilter: string | null,
+      startDate: Date,
+      endDate: Date,
+      onlyPaid: boolean
+  ): Promise<DashboardData> {
     
-    const isoStartString = startOfDay.toISOString();
+    const isoStartString = startDate.toISOString();
+    const isoEndString = endDate.toISOString();
 
     // Build Filter
     const filters: any[] = [
@@ -72,12 +75,13 @@ export class ShopwareService {
             type: 'range',
             field: 'orderDateTime',
             parameters: {
-                gte: isoStartString // Strict "Since Today 00:00"
+                gte: isoStartString,
+                lte: isoEndString
             }
         }
     ];
 
-    // Add Channel Filter if specific channel is selected (not null/All)
+    // Add Channel Filter
     if (channelFilter) {
         filters.push({
             type: 'equals',
@@ -86,44 +90,89 @@ export class ShopwareService {
         });
     }
 
-    // We perform a search that does TWO things:
-    // 1. Aggregations: Calculates the SUM on the server for revenue
-    // 2. Data: Gets the total count (hits) and recent orders
-    const orderResponse = await this.fetchWithAuth('/search/order', {
+    // Add Paid Filter
+    if (onlyPaid) {
+        filters.push({
+            type: 'equals',
+            field: 'transactions.stateMachineState.technicalName',
+            value: 'paid'
+        });
+    }
+
+    // Associations to fetch
+    const associations: any = {
+        stateMachineState: {},
+        orderCustomer: {},
+        salesChannel: {}
+    };
+    
+    if (onlyPaid) {
+        associations.transactions = {
+            associations: {
+                stateMachineState: {}
+            }
+        };
+    }
+
+    // Complex Aggregation to get Total Stats AND Channel Split in one go
+    const response = await this.fetchWithAuth('/search/order', {
       method: 'POST',
       body: JSON.stringify({
         page: 1,
         limit: 5, 
-        'total-count-mode': 1, // Explicitly request exact total count
+        'total-count-mode': 1, 
         filter: filters,
         sort: [{ field: 'orderDateTime', order: 'DESC' }],
-        associations: {
-          stateMachineState: {},
-          orderCustomer: {},
-          salesChannel: {}
-        },
-        // SERVER SIDE CALCULATION for Revenue
+        associations: associations,
         aggregations: [
+          // Total Sum
           {
             name: 'todaysStats',
             type: 'stats', 
             field: 'amountTotal'
+          },
+          // Group by Sales Channel
+          {
+            name: 'channels',
+            type: 'terms',
+            field: 'salesChannel.name',
+            aggregation: {
+               name: 'revenue',
+               type: 'stats', // or sum
+               field: 'amountTotal'
+            }
           }
         ]
       })
     });
 
-    if (!orderResponse.ok) throw new Error('Failed to fetch orders');
-    const orderData = await orderResponse.json();
+    if (!response.ok) throw new Error('Failed to fetch orders');
+    const orderData = await response.json();
 
-    // Parse the Server Aggregations for Revenue
+    // 1. Parse Total Stats
     const stats = orderData.aggregations?.todaysStats;
     const totalRevenue = stats?.sum || 0;
     const averageBasket = stats?.avg || 0;
-
-    // FIX: Use the main 'total' property from the search response for the count.
     const totalOrders = orderData.total || 0;
 
+    // 2. Parse Sales Channels
+    const channelBuckets = orderData.aggregations?.channels?.buckets || [];
+    const salesChannels: SalesChannelMetric[] = channelBuckets.map((bucket: any, index: number) => {
+        const channelRevenue = bucket.revenue?.sum || 0;
+        const percentage = totalRevenue > 0 ? (channelRevenue / totalRevenue) * 100 : 0;
+        
+        // Simple color rotation
+        const colors = ['#000000', '#189eff', '#a8a8a8', '#e5e7eb'];
+        
+        return {
+            name: bucket.key || 'Unknown',
+            revenue: channelRevenue,
+            percentage: Math.round(percentage),
+            color: colors[index % colors.length]
+        };
+    });
+
+    // 3. Parse Recent Orders
     const recentOrders: Order[] = orderData.data.map((o: any) => ({
       id: o.id,
       orderNumber: o.orderNumber,
@@ -150,7 +199,7 @@ export class ShopwareService {
       averageBasket: averageBasket,
       recentOrders: recentOrders,
       salesHistory: [], 
-      salesChannels: [] 
+      salesChannels: salesChannels 
     };
   }
 }

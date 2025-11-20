@@ -8,31 +8,6 @@ interface LoginProps {
   isLoading: boolean;
 }
 
-// High Quality Schlafgut Logo using SVG Text for perfect font match
-export const SchlafgutLogo = ({ className = "h-16" }: { className?: string }) => (
-  <svg viewBox="0 0 100 100" className={className} fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-    {/* The 'S' - Using the Inter font directly to ensure it is not deformed. 
-        centered horizontally, positioned to leave room for the heart. */}
-    <text 
-        x="42" 
-        y="82" 
-        fontFamily="Inter, sans-serif" 
-        fontWeight="700" 
-        fontSize="90" 
-        textAnchor="middle"
-        fill="currentColor"
-    >
-        S
-    </text>
-    
-    {/* The Heart - Geometric and clean, positioned top right relative to the S */}
-    <path 
-        d="M84,14 c-3.3,0-6.5,2-8,5 c-1.5-3-4.7-5-8-5 c-5,0-9,4-9,9 c0,8,17,19,17,19 s17-11,17-19 C93,18,89,14,84,14 z" 
-        fill="currentColor" 
-    />
-  </svg>
-);
-
 export const Login: React.FC<LoginProps> = ({ onConnect, error, isLoading }) => {
   // URL is hardcoded now
   const FIXED_URL = 'https://www.schlafgut.com';
@@ -60,8 +35,12 @@ export const Login: React.FC<LoginProps> = ({ onConnect, error, isLoading }) => 
     <div className="min-h-screen bg-white flex flex-col justify-center items-center px-6 pb-safe-bottom">
       <div className="max-w-md w-full space-y-10">
         <div className="text-center">
-          <div className="mb-10 flex justify-center text-black">
-             <SchlafgutLogo className="h-28 w-auto" />
+          <div className="mb-10 flex justify-center">
+             <img 
+               src="public/logo.png" 
+               alt="Schlafgut Logo" 
+               className="h-28 w-auto"
+             />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Dashboard Login</h2>
           <p className="mt-2 text-sm text-gray-400 font-medium">

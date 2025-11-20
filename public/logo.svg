@@ -1,0 +1,11 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap');
+    text { font-family: 'Inter', sans-serif; font-weight: 700; }
+  </style>
+  <!-- The 'S' - Centered and using Inter Bold -->
+  <text x="42" y="82" font-size="90" text-anchor="middle" fill="#000000">S</text>
+  
+  <!-- The Heart - Geometric and clean -->
+  <path d="M84,14 c-3.3,0-6.5,2-8,5 c-1.5-3-4.7-5-8-5 c-5,0-9,4-9,9 c0,8,17,19,17,19 s17-11,17-19 C93,18,89,14,84,14 z" fill="#000000"/>
+</svg>
