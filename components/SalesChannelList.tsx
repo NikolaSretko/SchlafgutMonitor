@@ -33,7 +33,7 @@ export const SalesChannelList: React.FC<Props> = ({ channels }) => {
               </div>
             </div>
             <div className="text-right">
-              <p className="text-sm font-bold text-gray-900">${channel.revenue.toFixed(2)}</p>
+              <p className="text-sm font-bold text-gray-900">{channel.revenue.toFixed(2)}€</p>
               <div className="w-16 h-1.5 bg-gray-100 rounded-full mt-1 overflow-hidden">
                 <div 
                     className="h-full rounded-full" 
