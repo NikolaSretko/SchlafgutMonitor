@@ -196,11 +196,11 @@ const App: React.FC = () => {
            
            {/* Custom Dropdown Pill */}
            <div className="relative group">
-               <div className="flex items-center bg-white border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all rounded-full px-4 py-2 cursor-pointer active:scale-95 duration-200 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
-                    <span className="text-gray-400 mr-2">
+               <div className="flex items-center bg-white border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all rounded-full px-2 sm:px-4 py-2 cursor-pointer active:scale-95 duration-200 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
+                    <span className="text-gray-400 mr-1 sm:mr-2">
                         <Store size={14} />
                     </span>
-                    <span className="text-xs font-bold text-gray-800 uppercase tracking-wide mr-2 max-w-[120px] truncate">
+                    <span className="text-xs font-bold text-gray-800 uppercase tracking-wide mr-1 sm:mr-2 max-w-[60px] sm:max-w-[120px] truncate">
                         {getSelectedLabel()}
                     </span>
                     <ChevronDown size={14} className="text-gray-400" />
