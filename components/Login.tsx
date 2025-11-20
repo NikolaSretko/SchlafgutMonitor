@@ -36,9 +36,9 @@ export const Login: React.FC<LoginProps> = ({ onConnect, error, isLoading }) => 
       <div className="max-w-md w-full space-y-10">
         <div className="text-center">
           <div className="mb-10 flex justify-center">
-             <img 
-               src="public/logo.png" 
-               alt="Schlafgut Logo" 
+             <img
+               src="/Logo.png"
+               alt="Schlafgut Logo"
                className="h-28 w-auto"
              />
           </div>

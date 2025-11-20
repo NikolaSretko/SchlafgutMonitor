@@ -172,9 +172,9 @@ const App: React.FC = () => {
      return (
        <div className="min-h-screen flex flex-col items-center justify-center bg-white">
          <div className="mb-6 animate-pulse">
-            <img 
-               src="public/logo.png" 
-               alt="Schlafgut" 
+            <img
+               src="/Logo.png"
+               alt="Schlafgut"
                className="h-24 w-auto"
             />
          </div>
@@ -188,9 +188,9 @@ const App: React.FC = () => {
       {/* Header */}
       <header className="bg-white sticky top-0 z-30 px-6 py-4 flex justify-between items-center border-b border-gray-100/50 backdrop-blur-xl bg-white/80">
         <div className="flex items-center space-x-4">
-           <img 
-             src="public/logo.png" 
-             alt="Schlafgut" 
+           <img
+             src="/Logo.png"
+             alt="Schlafgut"
              className="h-10 w-auto"
            />
            
